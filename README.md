@@ -5,7 +5,7 @@ The code was originally using BGR value thresholding to detect the red marker, b
 ####RGB thresholding result
 ![alt_tag](marker1_old.png)
 ###Working of present code
-The program now uses HSV value thresholding to detect the rectangular marker, then it erodes the picture twice to get rid of the noisy blobs, it then does a canny edge detection and uses probabilistic Hough line transform to detect the line segments . Finally the line with the maximum length is found and that line is extended to completely to give the sense of orientation  of the rectangular marker.
+The program now uses HSV value thresholding to detect the rectangular marker, then it erodes the picture once to get rid of the noisy blobs, it then does a canny edge detection and uses probabilistic Hough line transform to detect the line segments . Finally the line with the maximum length is found and that line is extended to completely to give the sense of orientation  of the rectangular marker.
 
 ![alt tag](marker1.png)
 
