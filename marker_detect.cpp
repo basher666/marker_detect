@@ -16,17 +16,24 @@ double Slope(int x0, int y0, int x1, int y1)
 void fullLine(Mat *img, Point a, Point b)
 {
   double slope = Slope(a.x, a.y, b.x, b.y);
-
+  cout<<slope<<endl;
   Scalar color(255,0,0);
   
   Point p(0,0), q(img->cols,img->rows);
-
-  p.y = -(a.x - p.x) * slope + a.y;
-  q.y = -(b.x - q.x) * slope + b.y;
-
+  
+  if(a.x!=b.x)
+    {
+      p.y = -(a.x - p.x) * slope + a.y;
+      q.y = -(b.x - q.x) * slope + b.y;
+    }
+  else
+    {
+      p.x=a.x;
+      q.x=b.x;
+    }
   line(*img,p,q,color,2,8);
 }
-
+/*
 Mat conv2bin(Mat frame,int b,int g,int r)
 {
   Mat binary(frame.rows,frame.cols,CV_8UC1);
@@ -47,7 +54,7 @@ Mat conv2bin(Mat frame,int b,int g,int r)
   
 
 }
-
+*/
 
 float calc_dist(Point a,Point b) //calculates the distance between two points
 {
@@ -60,29 +67,37 @@ int main(int argc,char **argv)
 
   char *file_name=argv[1];
   VideoCapture cap(file_name);
-  int b=20,g=20,r=200;
-  namedWindow("bgr threshold");
 
-  createTrackbar("blue","bgr threshold",&b,255,NULL);
-  createTrackbar("green","bgr threshold",&g,255,NULL);
-  createTrackbar("red","bgr threshold",&r,255,NULL);
-  
+  int hue_max=20,hue_min=0,sat_min=70,sat_max=255,val_min=0,val_max=255;
+
+  namedWindow("hue,saturation,value threshold");
+
+  createTrackbar("Hue_lower","hue,saturation,value threshold",&hue_min,255,NULL);
+  createTrackbar("Hue_upper","hue,saturation,value threshold",&hue_max,255,NULL);
+  createTrackbar("Sat_lower","hue,saturation,value threshold",&sat_min,255,NULL);
+  createTrackbar("Sat_upper","hue,saturation,value threshold",&sat_max,255,NULL);
+  createTrackbar("Val_lower","hue,saturation,value threshold",&val_min,255,NULL);
+  createTrackbar("Val_upper","hue,saturation,value threshold",&val_max,255,NULL);
   while(1)
     {
       
-      Mat frame,dst,ldst,ero;
+      Mat frame,dst,ldst,ero,hsv,binary;
       
       vector<vector <Point > > contours;
       vector<Vec4i > hierarchy;
       
       cap>>frame;
-      //blur(frame,frame,Size(3,3));
-      Mat binary=conv2bin(frame,b,g,r);
+      
+      //Mat binary=conv2bin(frame,b,g,r);
+
+      cvtColor(frame,hsv,COLOR_BGR2HSV);
+
+      inRange(hsv,Scalar(hue_min,sat_min,val_min),Scalar(hue_max,sat_max,val_max),binary);
       
       Mat element=getStructuringElement(MORPH_RECT,Size(3,3));
-      erode(binary,ero,element);
+      //erode(binary,ero,element);
+      ero=binary.clone();
       erode(ero,binary,element);
-
 
       /*
       findContours(ero,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_SIMPLE);
@@ -99,9 +114,10 @@ int main(int argc,char **argv)
 	
       Canny(binary,ldst,60,180,3);
 
+      
       vector<Vec4i> lines;
       
-      HoughLinesP(ldst,lines,1,CV_PI/180,80,30,10);
+      HoughLinesP(ldst,lines,2,CV_PI/360,80,10,30);
       
       for(size_t i=0;i<lines.size();i++)
 	{
@@ -127,10 +143,10 @@ int main(int argc,char **argv)
 
       fullLine(&frame, max_1,max_2);
       line(frame,max_1,max_2,Scalar(255,0,0),3,8);
-      //cout<<max_1.y<<","<<max_2.y<<endl;
 
-      imshow("bgr threshold",frame);
+      imshow("hue,saturation,value threshold",frame);
       imshow("erosion",binary);
+      //imshow("canny",ldst);
 
       char ch=waitKey(1000);
       
